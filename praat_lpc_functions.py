@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+
 def plot_sound(sound):
     plt.figure()
     plt.plot(sound.xs(), sound.values.T)
@@ -14,6 +15,14 @@ def plot_sound(sound):
     plt.xlabel("Time [sec]")
     plt.ylabel("Amplitude")
     plt.show()
+
+def save_plot_sound(sound, name):
+    plt.figure()
+    plt.plot(sound.xs(), sound.values.T)
+    plt.xlim([sound.xmin, sound.xmax])
+    plt.xlabel("Time [sec]")
+    plt.ylabel("Amplitude")
+    plt.savefig(f"{name}.png")
 
 def draw_spectrogram(spectrogram, dynamic_range=70):
     X, Y = spectrogram.x_grid(), spectrogram.y_grid()
@@ -95,14 +104,16 @@ def mixing_voices(sound_a, sound_b):
 
     result = parselmouth.praat.call([sound_a_pitch_pulse, sound_b_lpc], "Filter...", False)
 
+    result.save("result_before_scaled.wav", "WAV")
+    Audio(filename="result_before_scaled.wav")
     # result_scaled = parselmouth.praat.call(result, "Scale peak...", 0.99)
-    result_scaled = parselmouth.praat.call(result, "Scale peak...", 0.99)
+    parselmouth.praat.call(result, "Scale peak...", 0.99)
+    save_plot_sound(result, "Result")
 
+    result_scaled = result
     result_scaled.save("result_scaled.wav", "WAV")
     Audio(filename="result_scaled.wav")
-
-    # print(sound_b_lpc_matrix.values)
-
+    save_plot_sound(result_scaled, "Result_Scaled")
 
 
 
@@ -154,7 +165,7 @@ if __name__ == '__main__':
     sound_a = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/whitney houston.wav")
     sound_b = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/ExampleWithLPC/Audacity/fixed - Aaron talking whitney 2.wav")
 
-    # mixing_voices(sound_a, sound_b)
+    mixing_voices(sound_a, sound_b)
 
 
 
