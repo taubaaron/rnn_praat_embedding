@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 
+def read_sound(file_name):
+    return parselmouth.Sound(file_name)
 
 def plot_sound(sound):
     plt.figure()
@@ -64,10 +66,11 @@ def pitch_manipulation(sound):
     Audio(filename="whitney houston.wav")
 
 
-def lpc_extract(sound):
-    lpc = parselmouth.praat.call(sound, "To LPC (burg)", 64, 0.025, 0.005, 50.0)
+def lpc_extract(sound, lpc_order=64):
+    lpc = parselmouth.praat.call(sound, "To LPC (burg)", lpc_order, 0.025, 0.005, 50.0)
     lpc_matrix = parselmouth.praat.call(lpc, "Down to Matrix (lpc)")
-    print(lpc_matrix.values)
+    return lpc_matrix
+    # print(lpc_matrix.values)
 
 
 def mixing_voices(sound_a, sound_b):
@@ -119,11 +122,13 @@ def mixing_voices(sound_a, sound_b):
 
 if __name__ == '__main__':
     # Load Songs
+    # x = read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f1_s5_song.wav")
+    x = read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f1_s3_song.wav")
     sound = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/whitney houston.wav")
 
     # Prepare plotting
-    sns.set()  # default style for graphs
-    plt.rcParams['figure.dpi'] = 100  # show large images
+    # sns.set()  # default style for graphs
+    # plt.rcParams['figure.dpi'] = 100  # show large images
 
     # plot_sound(sound)  # plotting the sound
     #
@@ -162,10 +167,10 @@ if __name__ == '__main__':
     # LPC Extraction
     # lpc_extract(sound)
 
-    sound_a = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/whitney houston.wav")
-    sound_b = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/ExampleWithLPC/Audacity/fixed - Aaron talking whitney 2.wav")
-
-    mixing_voices(sound_a, sound_b)
+    # sound_a = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/whitney houston.wav")
+    # sound_b = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/ExampleWithLPC/Audacity/fixed - Aaron talking whitney 2.wav")
+    #
+    # mixing_voices(sound_a, sound_b)
 
 
 
