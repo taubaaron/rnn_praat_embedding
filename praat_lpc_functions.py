@@ -5,6 +5,7 @@ from parselmouth.praat import call
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+from scipy.signal import lfilter
 
 
 def read_sound(file_name):
@@ -42,6 +43,7 @@ def draw_intensity(intensity):
     plt.ylim(0)
     plt.ylabel("intensity [dB]")
 
+
 def draw_pitch(pitch):
     # Extract selected pitch contour, and
     # replace unvoiced samples by NaN to not plot
@@ -66,11 +68,16 @@ def pitch_manipulation(sound):
     Audio(filename="whitney houston.wav")
 
 
-def lpc_extract(sound, lpc_order=64):
+def lpc_matrix_extract(sound, lpc_order=64):
     lpc = parselmouth.praat.call(sound, "To LPC (burg)", lpc_order, 0.025, 0.005, 50.0)
     lpc_matrix = parselmouth.praat.call(lpc, "Down to Matrix (lpc)")
-    return lpc_matrix
+    return lpc_matrix.values
     # print(lpc_matrix.values)
+
+
+def sound_to_f0_pulse(sound):
+    sound_pitch = sound.to_pitch()
+    return sound_pitch.to_sound_pulses()
 
 
 def mixing_voices(sound_a, sound_b):
@@ -118,12 +125,75 @@ def mixing_voices(sound_a, sound_b):
     Audio(filename="result_scaled.wav")
     save_plot_sound(result_scaled, "Result_Scaled")
 
+###
+
+def enframe(x, win, inc=None):
+    nx = len(x)
+    if isinstance(win, list) or isinstance(win, np.ndarray):
+        nwin = len(win)
+        nlen = nwin
+    elif isinstance(win, int):
+        nwin = 1
+        nlen = win
+    if inc is None:
+        inc = nlen
+    nf = (nx - nlen + inc) // inc
+    frameout = np.zeros((nf, nlen))
+    indf = np.multiply(inc, np.array([i for i in range(nf)]))
+    for i in range(nf):
+        frameout[i, :] = x[indf[i]:indf[i] + nlen][0]
+    if isinstance(win, list) or isinstance(win, np.ndarray):
+        frameout = np.multiply(frameout, np.array(win))
+    return frameout
+
+
+def Filpframe_OverlapS(x, win, inc):
+    nf, slen = x.shape
+    nx = (nf - 1) * inc + slen
+    frameout = np.zeros(nx)
+    x = x / win[:,None]
+    for i in range(nf):
+        frameout[slen + (i - 1) * inc:slen + i * inc] += x[i, slen - inc:]
+    return frameout
+
+
+def lpc_synth_using_lflilter(lpc_matrix, f0_pulses, fs, wlen, inc):
+
+    lpc_order = lpc_matrix.shape[0]
+    msoverlap = wlen - inc
+
+    f0_matrix = (enframe(f0_pulses.T, wlen, inc)).T  # TODO: check the size if its not transpose
+
+    fn = min(f0_matrix.shape[1], lpc_matrix.shape[1])
+    Acoef = lpc_matrix
+    resid = f0_matrix
+    synFrame = np.zeros(f0_matrix.shape)
+
+    # Speech synthesis
+    for i in range(fn):
+        # synFrame[i, :] = lfilter([1], Acoef[:, i], resid[:, i])  # Original
+        if np.count_nonzero(Acoef[:,i]) >= 1:
+            synFrame[:, i] = lfilter([1], np.trim_zeros(Acoef[:, i], 'f'), resid[:, i])
+        else:  # if zeros vector
+            synFrame[:, i] = np.zeros(synFrame[:, i].shape)
+
+    outspeech = Filpframe_OverlapS(synFrame, np.hamming(wlen), inc)
+    plt.subplot(2, 1, 1)
+    plt.plot(lpc_matrix / np.max(np.abs(lpc_matrix)), 'k')
+    plt.title('Original Signal')
+    plt.subplot(2, 1, 2)
+    plt.title('Restore signal-LPC and error')
+    plt.plot(outspeech / np.max(np.abs(outspeech)), 'c')
+    plt.show()
+
+    return outspeech
+
 
 
 if __name__ == '__main__':
     # Load Songs
     # x = read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f1_s5_song.wav")
-    x = read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f1_s3_song.wav")
+    # x = read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f1_s3_song.wav")
     sound = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/whitney houston.wav")
 
     # Prepare plotting
@@ -165,12 +235,21 @@ if __name__ == '__main__':
     # Audio(data=sound.values, rate=sound.sampling_frequency)
 
     # LPC Extraction
-    # lpc_extract(sound)
+    # lpc_matrix_extract(sound)
 
     # sound_a = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/whitney houston.wav")
     # sound_b = parselmouth.Sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/ExampleWithLPC/Audacity/fixed - Aaron talking whitney 2.wav")
-    #
+
+    # What we did in praat
     # mixing_voices(sound_a, sound_b)
+
+    # Synthesizing the LPC to sound
+    sound = read_sound("/Users/aarontaub/Google Drive/AaronAndAmitBIU/FinalProject/Praat/whitney houston.wav")
+    fs = sound.sampling_frequency
+    sound_lpc_matrix = lpc_matrix_extract(sound, 64)
+    f0 = sound_to_f0_pulse(sound)
+
+    synth_sound = lpc_synth_using_lflilter(lpc_matrix=sound_lpc_matrix, f0_pulses=f0.values, fs=fs, wlen=round(0.025*fs), inc=round(0.005*fs))
 
 
 

@@ -9,11 +9,11 @@ lpc_order = 64
 
 # Generate data
 sound = praat_lpc_functions.read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f1_s3_song.wav")
-lpc_in = praat_lpc_functions.lpc_extract(sound, lpc_order=lpc_order)
+lpc_in = praat_lpc_functions.lpc_matrix_extract(sound, lpc_order=lpc_order)
 # praat_lpc_functions.plot_sound(sound)
 
 sound = praat_lpc_functions.read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f4_s3_song.wav")
-lpc_out = praat_lpc_functions.lpc_extract(sound, lpc_order=lpc_order)
+lpc_out = praat_lpc_functions.lpc_matrix_extract(sound, lpc_order=lpc_order)
 
 
 n = lpc_in.values.shape[1]  # number of frames
@@ -56,12 +56,12 @@ plt.show()
 
 # TEST(?)
 sound = praat_lpc_functions.read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f1_s6_song.wav")
-lpc_in_test = praat_lpc_functions.lpc_extract(sound, lpc_order=lpc_order)
+lpc_in_test = praat_lpc_functions.lpc_matrix_extract(sound, lpc_order=lpc_order)
 lpc_in_matrix_test = np.array(lpc_in_test.values)
 lpc_in_matrix_test = lpc_in_matrix_test.reshape(lpc_in_matrix_test.shape[0], lpc_in_matrix_test.shape[1], 1)
 
 sound = praat_lpc_functions.read_sound("/Users/aarontaub/Desktop/specific_nhss copy/f4_s6_song.wav")
-lpc_out_test = praat_lpc_functions.lpc_extract(sound, lpc_order=lpc_order)
+lpc_out_test = praat_lpc_functions.lpc_matrix_extract(sound, lpc_order=lpc_order)
 lpc_out_matrix_test = np.array(lpc_out_test.values)
 lpc_out_matrix_test = lpc_out_matrix_test.reshape(lpc_out_matrix_test.shape[0], lpc_out_matrix_test.shape[1], 1)
 
