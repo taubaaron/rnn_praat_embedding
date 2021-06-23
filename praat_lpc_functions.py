@@ -5,7 +5,8 @@ from parselmouth.praat import call
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from scipy.signal import lfilter
+from scipy.signal import lfilter, filtfilt
+from scipy.io.wavfile import write
 
 
 def read_sound(file_name):
@@ -77,7 +78,10 @@ def lpc_matrix_extract(sound, lpc_order=64):
 
 def sound_to_f0_pulse(sound):
     sound_pitch = sound.to_pitch()
-    return sound_pitch.to_sound_pulses()
+    pulses = sound_pitch.to_sound_pulses()
+    pulses.save("pulses.wav", "WAV")
+    Audio(filename="pulses.wav")
+    return pulses
 
 
 def mixing_voices(sound_a, sound_b):
@@ -148,44 +152,60 @@ def enframe(x, win, inc=None):
 
 
 def Filpframe_OverlapS(x, win, inc):
-    nf, slen = x.shape
+    """
+    :param x: should be size of: [window_size, num_of_frames
+    :param win:
+    :param inc:
+    :return:
+    """
+    x = x.T
+    win = win.T
+    nf, slen = x.shape  # [wlen, number of frames] == [1102, 8409]
     nx = (nf - 1) * inc + slen
     frameout = np.zeros(nx)
-    x = x / win[:,None]
+    # x = x / win[None, :]
     for i in range(nf):
         frameout[slen + (i - 1) * inc:slen + i * inc] += x[i, slen - inc:]
+    # frameout = frameout / max(frameout)
     return frameout
 
 
 def lpc_synth_using_lflilter(lpc_matrix, f0_pulses, fs, wlen, inc):
-
+    """
+    :param lpc_matrix:
+    :param f0_pulses:   [1, song_length]
+    :param fs: sampling rate
+    :param wlen: length of window
+    :param inc: step size
+    :return: synthed audio of new singer - lpc with f0 pulses
+    """
     lpc_order = lpc_matrix.shape[0]
     msoverlap = wlen - inc
 
-    f0_matrix = (enframe(f0_pulses.T, wlen, inc)).T  # TODO: check the size if its not transpose
-
+    f0_matrix = (enframe(f0_pulses[0,:], wlen, inc)).T  # TODO: check the size if its not transpose
     fn = min(f0_matrix.shape[1], lpc_matrix.shape[1])
-    Acoef = lpc_matrix
-    resid = f0_matrix
-    synFrame = np.zeros(f0_matrix.shape)
+    synFrame = np.zeros([wlen, fn])
 
     # Speech synthesis
     for i in range(fn):
-        # synFrame[i, :] = lfilter([1], Acoef[:, i], resid[:, i])  # Original
-        if np.count_nonzero(Acoef[:,i]) >= 1:
-            synFrame[:, i] = lfilter([1], np.trim_zeros(Acoef[:, i], 'f'), resid[:, i])
+        # synFrame[i, :] = lfilter([1], lpc_matrix[:, i], f0_matrix[:, i])  # Original
+        if np.count_nonzero(lpc_matrix[:,i]) >= 1:  # check if not zero vector
+            if i == 1082:
+                asd=1
+            # synFrame[:, i] = lfilter([1], np.trim_zeros(lpc_matrix[:, i], 'f'), f0_matrix[:, i])
+            synFrame[:, i] = filtfilt([1], np.trim_zeros(lpc_matrix[:, i], 'f'), f0_matrix[:, i])
         else:  # if zeros vector
             synFrame[:, i] = np.zeros(synFrame[:, i].shape)
 
     outspeech = Filpframe_OverlapS(synFrame, np.hamming(wlen), inc)
-    plt.subplot(2, 1, 1)
-    plt.plot(lpc_matrix / np.max(np.abs(lpc_matrix)), 'k')
-    plt.title('Original Signal')
-    plt.subplot(2, 1, 2)
-    plt.title('Restore signal-LPC and error')
-    plt.plot(outspeech / np.max(np.abs(outspeech)), 'c')
-    plt.show()
-
+    # plt.subplot(2, 1, 1)
+    # plt.plot(lpc_matrix / np.max(np.abs(lpc_matrix)), 'k')
+    # plt.title('Original Signal')
+    # plt.subplot(2, 1, 2)
+    # plt.title('Restore signal-LPC and error')
+    # plt.plot(outspeech / np.max(np.abs(outspeech)), 'c')
+    # plt.show()
+    scipy.io.wavfile.write("outspeech.wav", int(fs), outspeech)
     return outspeech
 
 
