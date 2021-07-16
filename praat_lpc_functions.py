@@ -192,7 +192,7 @@ def lpc_synth_using_lflilter(lpc_matrix, f0_pulses, fs, wlen, inc):
         if np.count_nonzero(lpc_matrix[:,i]) >= 1:  # check if not zero vector
             if i == 1082:
                 asd=1
-            # synFrame[:, i] = lfilter([1], np.trim_zeros(lpc_matrix[:, i], 'f'), f0_matrix[:, i])
+            synFrame[:, i] = lfilter([1], np.trim_zeros(lpc_matrix[:, i], 'f'), f0_matrix[:, i])
             synFrame[:, i] = filtfilt([1], np.trim_zeros(lpc_matrix[:, i], 'f'), f0_matrix[:, i])
         else:  # if zeros vector
             synFrame[:, i] = np.zeros(synFrame[:, i].shape)
