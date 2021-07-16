@@ -1,7 +1,7 @@
 import pandas as pd
 import glob
-from utils import *
-from model import RandomCNN
+from Random_CNN.utils import *
+from Random_CNN.model import RandomCNN
 
 
 data_path = 'VCTK-Corpus1/'

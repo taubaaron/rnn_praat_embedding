@@ -1,8 +1,7 @@
 import librosa
 import numpy as np
-import torch
 import soundfile
-from model import *
+from Random_CNN.model import *
 from packaging import version
 
 def librosa_write(outfile, x, sr):

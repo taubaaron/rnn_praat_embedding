@@ -1,9 +1,8 @@
 import matplotlib
 matplotlib.use('agg')
 import matplotlib.pyplot as plt
-from torch.autograd import Variable
-from utils import *
-from model import *
+from Random_CNN.utils import *
+from Random_CNN.model import *
 import time
 import math
 import argparse
