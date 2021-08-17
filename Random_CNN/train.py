@@ -12,19 +12,21 @@ cuda = True if torch.cuda.is_available() else False
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-content', help='Content input')
-parser.add_argument('-content_weight', help='Content weight. Default is 1e2', default = 1e2)
+parser.add_argument('-content_weight', help='Content weight. Default is 1e2', default = 1)
 parser.add_argument('-style', help='Style input')
-parser.add_argument('-style_weight', help='Style weight. Default is 1', default = 1)
-parser.add_argument('-epochs', type=int, help='Number of epoch iterations. Default is 20000', default = 20000)
-parser.add_argument('-print_interval', type=int, help='Number of epoch iterations between printing losses', default = 10)
-parser.add_argument('-plot_interval', type=int, help='Number of epoch iterations between plot points', default = 10)
-parser.add_argument('-learning_rate', type=float, default = 0.02)
+parser.add_argument('-style_weight', help='Style weight. Default is 1', default = 1e2)
+parser.add_argument('-epochs', type=int, help='Number of epoch iterations. Default is 20000', default = 1000000)
+parser.add_argument('-print_interval', type=int, help='Number of epoch iterations between printing losses', default = 1000)
+parser.add_argument('-plot_interval', type=int, help='Number of epoch iterations between plot points', default = 1000)
+parser.add_argument('-learning_rate', type=float, default = 0.015)
 parser.add_argument('-output', help='Output file name. Default is "output"', default = 'output')
 args = parser.parse_args()
 
 
-CONTENT_FILENAME = args.content
-STYLE_FILENAME = args.style
+# CONTENT_FILENAME = args.content
+# STYLE_FILENAME = args.style
+CONTENT_FILENAME = "whitney_houston.wav"
+STYLE_FILENAME = "Aaron_style_transfer_input.wav"
 
 a_content, sr = wav2spectrum(CONTENT_FILENAME)
 a_style, sr = wav2spectrum(STYLE_FILENAME)
@@ -67,7 +69,7 @@ content_param = args.content_weight
 num_epochs = args.epochs
 print_every = args.print_interval
 plot_every = args.plot_interval
-save_every = 1000
+save_every = 100000
 
 # Keep track of losses for plotting
 current_loss = 0

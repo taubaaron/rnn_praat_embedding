@@ -1,3 +1,5 @@
+from builtins import enumerate
+
 from resemblyzer import VoiceEncoder, preprocess_wav
 from pathlib import Path
 import numpy as np
